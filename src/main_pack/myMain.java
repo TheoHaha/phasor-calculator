@@ -9,7 +9,7 @@ public class myMain
 	public static void main(String[] args) 
 	{
 		Gui gui = new Gui();
-	    gui.setSize(355,400);
+	    	gui.setSize(355,400);
 		gui.setVisible(true);
 	}
 }
