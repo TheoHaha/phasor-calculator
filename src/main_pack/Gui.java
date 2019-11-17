@@ -36,6 +36,8 @@ import javax.swing.JTextArea;
 import java.awt.Toolkit;
 import java.awt.Component;
 import javax.swing.ImageIcon;
+import javax.swing.event.ListSelectionListener;
+import javax.swing.event.ListSelectionEvent;
 
 public class Gui extends JFrame {
 
@@ -47,6 +49,7 @@ public class Gui extends JFrame {
 	private JPanel contentPane;
 	private JTextField result;
 	private JTextField opResultLabel;
+	private JTextField convertResult;
 	
 	private ButtonGroup numtypeBGroup = new ButtonGroup();
 	private ButtonGroup operationBGroup = new ButtonGroup();
@@ -55,6 +58,7 @@ public class Gui extends JFrame {
 	private Complex complex = new Complex(0,0);
 	private Phasor phasor = new Phasor(0,0);
 	private MyNumber resultNum = null;
+	private MyNumber convResultNum = null;
 	
 	protected boolean isComplex = true;
 	/**
@@ -256,6 +260,7 @@ public class Gui extends JFrame {
 				yLabel.setText("Enter y");
 				
 				result.setText("0");
+				convertResult.setText("0");
 				opResultLabel.setText("Result: ");
 				
 				resultNum = null;
@@ -264,12 +269,94 @@ public class Gui extends JFrame {
 			}
 		});
 		
-		JLabel logo1 = new JLabel("v1.0");
+		JLabel logo1 = new JLabel("v1.1");
 		logo1.setFont(new Font("Tahoma", Font.BOLD, 11));
 		logo1.setBounds(10, 240, 150, 87);
 		listMaker.add(logo1);
 		logo1.setHorizontalAlignment(SwingConstants.CENTER);
 		logo1.setIcon(new ImageIcon(Gui.class.getResource("/main_pack/phasor_icon--.png")));
+		
+		JPanel converter = new JPanel();
+		tabbedPane.addTab("Converter", null, converter, null);
+		converter.setLayout(null);
+		
+		JScrollPane convListPane = new JScrollPane();
+		convListPane.setBounds(10, 11, 150, 316);
+		converter.add(convListPane);
+		
+		JList<String> converterList = new JList<String>(numberListModel);
+		convListPane.setViewportView(converterList);
+		
+		JPanel convPane = new JPanel();
+		convPane.setBounds(176, 129, 150, 77);
+		converter.add(convPane);
+		convPane.setLayout(new GridLayout(0, 1, 0, 1));
+		
+		JButton convertButton = new JButton("Convert to phasor...");
+		convertButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) 
+			{
+				MyNumber temp;
+				try {
+					if(converterList.getSelectedValue().contains("|"))
+					{
+						temp = Phasor.parsePhasor(converterList.getSelectedValue());
+						convResultNum = Convert.toComplex((Phasor)temp);
+						convertResult.setText(convResultNum.toString());
+					}
+					else
+					{
+						temp = Complex.parseComplex(converterList.getSelectedValue());
+						convResultNum = Convert.toPhasor((Complex)temp);
+						convertResult.setText(convResultNum.toString());
+					}
+				}catch(NullPointerException ex) {
+					convertResult.setText("No selection!");
+				}
+			}
+		});
+		convPane.add(convertButton);
+		
+		converterList.addListSelectionListener(new ListSelectionListener() {
+			public void valueChanged(ListSelectionEvent e)
+			{
+				try {
+					if(converterList.getSelectedValue().contains("|"))
+					{
+						convertButton.setText("Convert to complex...");
+					}
+					else
+					{
+						convertButton.setText("Convert to phasor...");
+					}
+				}catch(Exception exception) {
+					convertButton.setText("No selection!");
+				}
+			}
+		});
+		
+		convertResult = new JTextField();
+		convertResult.setText("0");
+		convertResult.setHorizontalAlignment(SwingConstants.CENTER);
+		convertResult.setEditable(false);
+		convPane.add(convertResult);
+		convertResult.setColumns(10);
+		
+		JButton addConvToList = new JButton("Add to list");
+		addConvToList.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) 
+			{
+				try {
+					if (convResultNum.getClass()==new Complex().getClass())
+						numberListModel.addElement(((Complex)convResultNum).toString());
+					else if (convResultNum.getClass()==new Phasor().getClass())
+						numberListModel.addElement(((Phasor)convResultNum).toString());
+				}catch(NullPointerException exception) {
+					JOptionPane.showMessageDialog(new JPanel(), "There is no conversion result to add to the list!", "Warning", JOptionPane.WARNING_MESSAGE);
+				}
+			}
+		});
+		convPane.add(addConvToList);
 		
 		JPanel calculator = new JPanel();
 		tabbedPane.addTab("Calculator", null, calculator, null);
@@ -453,7 +540,6 @@ public class Gui extends JFrame {
 				}catch(NullPointerException exception) {
 					JOptionPane.showMessageDialog(new JPanel(), "There is no result to add to the list!", "Warning", JOptionPane.WARNING_MESSAGE);
 				}
-				
 			}
 		});
 		
@@ -530,7 +616,7 @@ public class Gui extends JFrame {
 		links.add(licenseHyperlink);
 		licenseHyperlink.setAlignmentX(0.5f);
 		
-		JLabel lblCurrentVersion = new JLabel("Current version: 1.0");
+		JLabel lblCurrentVersion = new JLabel("Current version: 1.1");
 		lblCurrentVersion.setHorizontalTextPosition(SwingConstants.CENTER);
 		lblCurrentVersion.setHorizontalAlignment(SwingConstants.LEFT);
 		lblCurrentVersion.setFont(new Font("Tahoma", Font.BOLD, 11));
