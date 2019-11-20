@@ -50,17 +50,26 @@ public class Gui extends JFrame {
 	private JTextField result;
 	private JTextField opResultLabel;
 	private JTextField convertResult;
+	private JSpinner xInput;
+	private JSpinner yInput;
+	private JRadioButton radioComplex;
+	private JRadioButton radioPhasor;
+	private JLabel xLabel;
+	private JLabel yLabel;
 	
 	private ButtonGroup numtypeBGroup = new ButtonGroup();
 	private ButtonGroup operationBGroup = new ButtonGroup();
 	private ButtonGroup resultNumTypeBGroup = new ButtonGroup();
 	
-	private Complex complex = new Complex(0,0);
-	private Phasor phasor = new Phasor(0,0);
+	private DefaultListModel<String> numberListModel = new DefaultListModel<String>();
+	
+	private Complex complex = new Complex();
+	private Phasor phasor = new Phasor();
 	private MyNumber resultNum = null;
 	private MyNumber convResultNum = null;
 	
 	protected boolean isComplex = true;
+	private JTextField selectedNumField;
 	/**
 	 * Create the frame.
 	 */
@@ -96,7 +105,7 @@ public class Gui extends JFrame {
 		gbl_inputPane.rowWeights = new double[]{1.0, 1.0, Double.MIN_VALUE};
 		inputPane.setLayout(gbl_inputPane);
 		
-		JLabel xLabel = new JLabel("Enter x");
+		xLabel = new JLabel("Enter x");
 		xLabel.setHorizontalAlignment(SwingConstants.TRAILING);
 		GridBagConstraints gbc_xLabel = new GridBagConstraints();
 		gbc_xLabel.fill = GridBagConstraints.VERTICAL;
@@ -105,7 +114,7 @@ public class Gui extends JFrame {
 		gbc_xLabel.gridy = 0;
 		inputPane.add(xLabel, gbc_xLabel);
 		
-		JSpinner xInput = new JSpinner();
+		xInput = new JSpinner();
 		xInput.addChangeListener(new ChangeListener() {
 			public void stateChanged(ChangeEvent e) 
 			{
@@ -125,7 +134,7 @@ public class Gui extends JFrame {
 		gbc_xInput.gridy = 0;
 		inputPane.add(xInput, gbc_xInput);
 		
-		JLabel yLabel = new JLabel("Enter y");
+		yLabel = new JLabel("Enter y");
 		yLabel.setHorizontalAlignment(SwingConstants.TRAILING);
 		GridBagConstraints gbc_yLabel = new GridBagConstraints();
 		gbc_yLabel.fill = GridBagConstraints.VERTICAL;
@@ -134,7 +143,7 @@ public class Gui extends JFrame {
 		gbc_yLabel.gridy = 1;
 		inputPane.add(yLabel, gbc_yLabel);
 		
-		JSpinner yInput = new JSpinner();
+		yInput = new JSpinner();
 		yInput.addChangeListener(new ChangeListener() {
 			public void stateChanged(ChangeEvent e) 
 			{
@@ -159,7 +168,7 @@ public class Gui extends JFrame {
 		FlowLayout fl_numTypePane = new FlowLayout(FlowLayout.LEADING, 0, 1);
 		numTypePane.setLayout(fl_numTypePane);
 		
-		JRadioButton radioComplex = new JRadioButton("Complex Number");
+		radioComplex = new JRadioButton("Complex Number");
 		radioComplex.setToolTipText("Complex numbers look like this: \r\na = x + i*y");
 		radioComplex.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) 
@@ -174,7 +183,7 @@ public class Gui extends JFrame {
 		radioComplex.setSelected(true);
 		numtypeBGroup.add(radioComplex);
 		
-		JRadioButton radioPhasor = new JRadioButton("Phasor");
+		radioPhasor = new JRadioButton("Phasor");
 		radioPhasor.setToolTipText("Phasors look like this: \r\na = z | φ°");
 		radioPhasor.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) 
@@ -200,7 +209,6 @@ public class Gui extends JFrame {
 		JScrollPane numberListPane = new JScrollPane();
 		numberListPane.setBounds(176, 11, 150, 316);
 		listMaker.add(numberListPane);
-		DefaultListModel<String> numberListModel = new DefaultListModel<String>();
 		JList<String> numberList = new JList<String>(numberListModel);
 		numberList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		numberListPane.setViewportView(numberList);
@@ -240,34 +248,7 @@ public class Gui extends JFrame {
 		
 		JButton reset = new JButton("Reset");
 		moreButtons.add(reset);
-		reset.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) 
-			{
-				complex.setX(0);
-				phasor.setZ(0);
-				
-				complex.setY(0);
-				phasor.setPhase(0);
-				
-				xInput.setValue(0.0);
-				yInput.setValue(0.0);
-				
-				radioComplex.setSelected(true);
-				radioPhasor.setSelected(false);
-				isComplex = true;
-				
-				xLabel.setText("Enter x");
-				yLabel.setText("Enter y");
-				
-				result.setText("0");
-				convertResult.setText("0");
-				opResultLabel.setText("Result: ");
-				
-				resultNum = null;
-				
-				numberListModel.clear();
-			}
-		});
+		reset.addActionListener(new ResetAction());
 		
 		JLabel logo1 = new JLabel("v1.1");
 		logo1.setFont(new Font("Tahoma", Font.BOLD, 11));
@@ -285,10 +266,28 @@ public class Gui extends JFrame {
 		converter.add(convListPane);
 		
 		JList<String> converterList = new JList<String>(numberListModel);
+		converterList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		convListPane.setViewportView(converterList);
 		
+		JPanel selectedPane = new JPanel();
+		selectedPane.setBounds(176, 84, 150, 77);
+		converter.add(selectedPane);
+		selectedPane.setLayout(new GridLayout(0, 1, 0, 1));
+		
+		JLabel selectedLabel = new JLabel("Selected number:");
+		selectedPane.add(selectedLabel);
+		
+		selectedNumField = new JTextField();
+		selectedNumField.setHorizontalAlignment(SwingConstants.CENTER);
+		selectedNumField.setEditable(false);
+		selectedPane.add(selectedNumField);
+		selectedNumField.setColumns(10);
+		
+		JLabel numtypeLabel = new JLabel("Number type:");
+		selectedPane.add(numtypeLabel);
+		
 		JPanel convPane = new JPanel();
-		convPane.setBounds(176, 129, 150, 77);
+		convPane.setBounds(176, 180, 150, 77);
 		converter.add(convPane);
 		convPane.setLayout(new GridLayout(0, 1, 0, 1));
 		
@@ -298,15 +297,14 @@ public class Gui extends JFrame {
 			{
 				MyNumber temp;
 				try {
-					if(converterList.getSelectedValue().contains("|"))
+					temp = MyNumber.parseMyNumber(converterList.getSelectedValue());
+					if(temp.getClass()==new Phasor().getClass())
 					{
-						temp = Phasor.parsePhasor(converterList.getSelectedValue());
 						convResultNum = Convert.toComplex((Phasor)temp);
 						convertResult.setText(convResultNum.toString());
 					}
 					else
 					{
-						temp = Complex.parseComplex(converterList.getSelectedValue());
 						convResultNum = Convert.toPhasor((Complex)temp);
 						convertResult.setText(convResultNum.toString());
 					}
@@ -321,22 +319,26 @@ public class Gui extends JFrame {
 			public void valueChanged(ListSelectionEvent e)
 			{
 				try {
+					selectedNumField.setText(converterList.getSelectedValue());
 					if(converterList.getSelectedValue().contains("|"))
 					{
+						numtypeLabel.setText("Number type: Phasor");
 						convertButton.setText("Convert to complex...");
 					}
 					else
 					{
+						numtypeLabel.setText("Number type: Complex");
 						convertButton.setText("Convert to phasor...");
 					}
 				}catch(Exception exception) {
-					convertButton.setText("No selection!");
+					convertButton.setText("Convert to phasor...");
+					numtypeLabel.setText("Number type:");
+					selectedNumField.setText("0");
 				}
 			}
 		});
 		
 		convertResult = new JTextField();
-		convertResult.setText("0");
 		convertResult.setHorizontalAlignment(SwingConstants.CENTER);
 		convertResult.setEditable(false);
 		convPane.add(convertResult);
@@ -348,9 +350,9 @@ public class Gui extends JFrame {
 			{
 				try {
 					if (convResultNum.getClass()==new Complex().getClass())
-						numberListModel.addElement(((Complex)convResultNum).toString());
+						numberListModel.addElement(convResultNum.toString());
 					else if (convResultNum.getClass()==new Phasor().getClass())
-						numberListModel.addElement(((Phasor)convResultNum).toString());
+						numberListModel.addElement(convResultNum.toString());
 				}catch(NullPointerException exception) {
 					JOptionPane.showMessageDialog(new JPanel(), "There is no conversion result to add to the list!", "Warning", JOptionPane.WARNING_MESSAGE);
 				}
@@ -367,6 +369,7 @@ public class Gui extends JFrame {
 		calculator.add(calcListPane1);
 		
 		JList<String> calcList1 = new JList<String>(numberListModel);
+		calcList1.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		calcListPane1.setViewportView(calcList1);
 		
 		JScrollPane calcListPane2 = new JScrollPane();
@@ -374,6 +377,7 @@ public class Gui extends JFrame {
 		calculator.add(calcListPane2);
 		
 		JList<String> calcList2 = new JList<String>(numberListModel);
+		calcList2.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		calcListPane2.setViewportView(calcList2);
 		
 		JPanel operationPane = new JPanel();
@@ -443,45 +447,26 @@ public class Gui extends JFrame {
 					
 					MyNumber a1,a2;
 					
-					if(choice1.contains("|"))
-					{
-						a1 = Phasor.parsePhasor(choice1);
-					}
-					else
-					{
-						a1 = Complex.parseComplex(choice1);
-					}
-					
-					if(choice2.contains("|"))
-					{
-						a2 = Phasor.parsePhasor(choice2);
-					}
-					else
-					{
-						a2 = Complex.parseComplex(choice2);
-					}
+					a1 = MyNumber.parseMyNumber(choice1);
+					a2 = MyNumber.parseMyNumber(choice2);
 					
 					if(radioResultC.isSelected())
 					{
 						if (radioPlus.isSelected())
 						{
 							resultNum = Complex.add(a1, a2);
-							opResultLabel.setText("Result: "+resultNum.toString());
 						}
 						else if (radioMinus.isSelected())
 						{
 							resultNum = Complex.sub(a1, a2);
-							opResultLabel.setText("Result: "+resultNum.toString());
 						}
 						else if (radioTimes.isSelected())
 						{
 							resultNum = Complex.mul(a1, a2);
-							opResultLabel.setText("Result: "+resultNum.toString());
 						}
 						else if (radioDivBy.isSelected())
 						{
 							resultNum = Complex.div(a1, a2);
-							opResultLabel.setText("Result: "+resultNum.toString());
 						}
 					}
 					else if(radioResultPh.isSelected())
@@ -489,24 +474,21 @@ public class Gui extends JFrame {
 						if (radioPlus.isSelected())
 						{
 							resultNum = Phasor.add(a1, a2);
-							opResultLabel.setText("Result: "+((Phasor)resultNum).toString());
 						}
 						else if (radioMinus.isSelected())
 						{
 							resultNum = Phasor.sub(a1, a2);
-							opResultLabel.setText("Result: "+((Phasor)resultNum).toString());
 						}
 						else if (radioTimes.isSelected())
 						{
 							resultNum = Phasor.mul(a1, a2);
-							opResultLabel.setText("Result: "+((Phasor)resultNum).toString());
 						}
 						else if (radioDivBy.isSelected())
 						{
 							resultNum = Phasor.div(a1, a2);
-							opResultLabel.setText("Result: "+((Phasor)resultNum).toString());
 						}
 					}
+					opResultLabel.setText("Result: "+resultNum.toString());
 				
 				}catch(NullPointerException e) {
 					if (numberListModel.isEmpty())
@@ -533,10 +515,7 @@ public class Gui extends JFrame {
 			public void actionPerformed(ActionEvent e) 
 			{
 				try {
-					if (resultNum.getClass()==new Complex().getClass())
-						numberListModel.addElement(((Complex)resultNum).toString());
-					else if (resultNum.getClass()==new Phasor().getClass())
-						numberListModel.addElement(((Phasor)resultNum).toString());
+					numberListModel.addElement(resultNum.toString());
 				}catch(NullPointerException exception) {
 					JOptionPane.showMessageDialog(new JPanel(), "There is no result to add to the list!", "Warning", JOptionPane.WARNING_MESSAGE);
 				}
@@ -545,33 +524,7 @@ public class Gui extends JFrame {
 		
 		JButton reset2 = new JButton("Reset");
 		moremorebuttons.add(reset2);
-		reset2.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) 
-			{
-				complex.setX(0);
-				phasor.setZ(0);
-				
-				complex.setY(0);
-				phasor.setPhase(0);
-				
-				xInput.setValue(0.0);
-				yInput.setValue(0.0);
-				
-				radioComplex.setSelected(true);
-				radioPhasor.setSelected(false);
-				isComplex = true;
-				
-				xLabel.setText("Enter x");
-				yLabel.setText("Enter y");
-				
-				result.setText("0");
-				opResultLabel.setText("Result: ");
-				
-				resultNum = null;
-				
-				numberListModel.clear();
-			}
-		});
+		reset2.addActionListener(new ResetAction());
 		
 		JPanel aboutpage = new JPanel();
 		tabbedPane.addTab("About...", null, aboutpage, (String) null);
@@ -582,19 +535,27 @@ public class Gui extends JFrame {
 		lblCopyrightLolololol.setHorizontalAlignment(SwingConstants.RIGHT);
 		lblCopyrightLolololol.setForeground(SystemColor.textHighlight);
 		lblCopyrightLolololol.setFont(new Font("Comic Sans MS", Font.PLAIN, 10));
-		lblCopyrightLolololol.setBounds(206, 57, 119, 14);
+		lblCopyrightLolololol.setBounds(10, 57, 316, 14);
 		aboutpage.add(lblCopyrightLolololol);
 		
 		JLabel logo2 = new JLabel("Theo's Phasor Calc");
 		logo2.setForeground(SystemColor.textHighlight);
 		logo2.setFont(new Font("Comic Sans MS", Font.BOLD | Font.ITALIC, 26));
 		logo2.setIcon(new ImageIcon(Gui.class.getResource("/main_pack/phasor_icon--.png")));
-		logo2.setBounds(10, 11, 315, 60);
+		logo2.setBounds(10, 11, 316, 60);
 		aboutpage.add(logo2);
 		
 		JPanel links = new JPanel();
-		links.setBounds(10, 300, 315, 24);
+		links.setBounds(10, 300, 316, 24);
 		aboutpage.add(links);
+		
+		JHyperlink phasorsHyperlink = new JHyperlink("About phasors", "https://en.wikipedia.org/wiki/Phasor", "Learn more about phasors here.");
+		phasorsHyperlink.setAlignmentX(0.5f);
+		links.add(phasorsHyperlink);
+		
+		JLabel seperator_2 = new JLabel("|");
+		seperator_2.setAlignmentX(0.5f);
+		links.add(seperator_2);
 		
 		JHyperlink twitterHyperlink = new JHyperlink("Twitter", "https://twitter.com/Theo_xde", "Message me on Twitter if you encounter any problems with this app or if you have any suggestions.\r \r\nMake sure you tell me that you came from here!");
 		twitterHyperlink.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -620,7 +581,7 @@ public class Gui extends JFrame {
 		lblCurrentVersion.setHorizontalTextPosition(SwingConstants.CENTER);
 		lblCurrentVersion.setHorizontalAlignment(SwingConstants.LEFT);
 		lblCurrentVersion.setFont(new Font("Tahoma", Font.BOLD, 11));
-		lblCurrentVersion.setBounds(10, 72, 315, 24);
+		lblCurrentVersion.setBounds(10, 72, 316, 24);
 		aboutpage.add(lblCurrentVersion);
 		
 		JTextArea about = new JTextArea();
@@ -630,7 +591,36 @@ public class Gui extends JFrame {
 		about.setFont(new Font("Tahoma", Font.PLAIN, 11));
 		about.setEditable(false);
 		about.setText("This is a program created by Theodoros Michailidis which aims to help students or anyone who has to deal with phasors and complex numbers in their day to day lives.\r\n\r\nI actually made this for my own use and for the sake of practice, but you can use it too. Feel free to do so if you think it's going to help you. You can even take a look into the source code and maybe learn something from it. \r\n\r\nI'm more than open to advice on how to improve it.\r\n\r\nThis program is and will always be 100% free to use, modify, redistribute, and anything else that is entailed by the GNU GPLv3.");
-		about.setBounds(10, 97, 315, 240);
+		about.setBounds(10, 97, 316, 240);
 		aboutpage.add(about);
+	}
+	
+	private class ResetAction implements ActionListener
+	{
+		public void actionPerformed(ActionEvent e) 
+		{
+			complex = new Complex();
+			phasor = new Phasor();
+			
+			xInput.setValue(0.0);
+			yInput.setValue(0.0);
+			
+			radioComplex.setSelected(true);
+			radioPhasor.setSelected(false);
+			isComplex = true;
+			
+			xLabel.setText("Enter x");
+			yLabel.setText("Enter y");
+			
+			result.setText("0");
+			convertResult.setText("0");
+			opResultLabel.setText("Result: ");
+			
+			resultNum = null;
+			convResultNum = null;
+			
+			numberListModel.clear();
+			
+		}
 	}
 }
